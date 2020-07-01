@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Desktop publishing software
+title: Git commit hashes
 description: Lorem Ipsum is simply dummy text
 summary: Lorem Ipsum is simply dummy text.
 tags: [css]
