@@ -1,5 +1,5 @@
 site: Personal Blog of Jonathan Finch
-url: # url
+url: https://finchmeister.github.io/blog20
 author:
   name: Jonathan Finch
   email: # your email 
@@ -17,7 +17,7 @@ social:
   name: Jonathan Finch
   links:
     - https://github.com/finchmeister
-  
+
 repository: finchmeister/blog20
 
 permalink: pretty
@@ -28,7 +28,7 @@ disqus:
 
 paginate:            1000
 paginate_path:       "/page:num/"
-baseurl:             ""
+baseurl:             "https://finchmeister.github.io/blog20"
   
 compress_html:
   clippings: all
