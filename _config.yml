@@ -1,29 +1,24 @@
-site: Gray - Single column blog and portfolio Jekyll theme
+site: Personal Blog of Jonathan Finch
 url: # url
-author: # your name
 author:
-  name: # your name
+  name: Jonathan Finch
   email: # your email 
   url: # url
   avatar: 
-title: Gray - Single column blog and portfolio Jekyll theme
-description: Gray - Single column blog and portfolio Jekyll theme
+title: Personal Blog of Jonathan Finch
+description: Personal Blog of Jonathan Finch
 logo: 
 image: 
-twitter: # twitter 
 twitter:
   username: # twitter
   creator: # twitter
   card: summary
 social:
-  name: Ronalds Vilcins
+  name: Jonathan Finch
   links:
-    - https://twitter.com/example
-    - https://www.dribbble.com/example
-    - https://github.com/example
-    - https://codepen.io/example
+    - https://github.com/finchmeister
   
-repository: ronv/website
+repository: finchmeister/blog20
 
 permalink: pretty
 
