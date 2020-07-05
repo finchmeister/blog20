@@ -9,8 +9,8 @@ tags: [tech]
 
 Life as a programmer is often mundane. You start with a brief to make something happen on a screen, then spend hours upon hours sat at a desk, typing and tapping away, before eventually finding out the feature you've just lovingly crafted isn't needed anymore. It means that small, out of the ordinary events in the software development process can catch one's curiosity and lead to unexpected tangents in the pursuit of knowledge such as 'how rare is this _all digit_ git commit hash I have just generated?'
 
-![Short commit](/assets/git-number-theory/shortgitcommit.png)
-![Full commit](/assets/git-number-theory/gitcommit.png)
+![Short commit]({{ '/assets/git-number-theory/shortgitcommit.png' | relative_url }})
+![Full commit]({{ '/assets/git-number-theory/gitcommit.png' | relative_url }})
 
 I was sure I had seen these things before but I had no clue as to the significance of it, so I went on a journey to find out.
 

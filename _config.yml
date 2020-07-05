@@ -23,12 +23,12 @@ repository: finchmeister/blog20
 permalink: pretty
 
 disqus:
-  name: "your username" # required
+  name: "thefinchmeister" # required
   noscript: "Please enable JavaScript to view the comments powered by Disqus." # optional
 
 paginate:            1000
 paginate_path:       "/page:num/"
-baseurl:             "https://finchmeister.github.io/blog20"
+baseurl:             ""
   
 compress_html:
   clippings: all
@@ -44,6 +44,8 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
   - disqus-for-jekyll
+  - jekyll-include-cache
+  - github-pages
 
 collections:
   pages:

@@ -6,3 +6,5 @@ gem 'jekyll-seo-tag'
 gem 'jekyll-sitemap'
 gem 'jekyll-git_metadata'
 gem 'disqus-for-jekyll'
+gem "github-pages", group: :jekyll_plugins
+gem 'jekyll-include-cache'
