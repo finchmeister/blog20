@@ -1,26 +1,26 @@
 ---
 layout: post
 title: Git Commit Hash Number Theory
-description: How rare is an all digit commit commit hash?
-summary: How rare is an all digit commit commit hash?
+description: How rare is an all digit commit hash?
+summary: How rare is an all digit commit hash?
 tags: [tech]
 ---
 
 
-Life as a programmer is often mundane. You start with a brief to make something happen on a screen, then spend hours upon hours sat at a desk, typing and tapping away, before eventually finding out the feature you've just lovingly crafted isn't needed anymore. It means that small, out of the ordinary events in the software development process can catch one's curiosity and lead to unexpected tangents in the pursuit of knowledge such as 'how rare is this _all digit_ git commit hash I have just generated?'
+Life as a programmer is often mundane. You start with a brief to make something happen on a screen. Spend hours upon hours sat at a desk, typing and tapping away, before eventually finding out the feature you've just lovingly crafted isn't needed anymore. It means that small, out of the ordinary events in the software development process can catch one's curiosity and lead to unexpected tangents in the pursuit of knowledge, such as 'how rare is this _all digit_ git commit hash I have just generated?'
 
 ![Short commit]({{ '/assets/git-number-theory/shortgitcommit.png' | relative_url }})
 ![Full commit]({{ '/assets/git-number-theory/gitcommit.png' | relative_url }})
 
-I was sure I had seen these things before but I had no clue as to the significance of it, so I went on a journey to find out.
+I was sure I had seen these things before, but I had no clue as to the significance of it, so I went on a journey to find out.
 
 At a high level, a git commit hash is a SHA1 hash of the state of the git repository at the time of the commit. A short git commit hash is an abbreviation of the hash to the first 7 characters, it is almost certainly unique within a repository and git will increase the number of characters used if it is not.
 
-To empirically find out the probability of an all digit hash, I wrote a simulation that generated lots of SHA1 hashes and returned the percentage of the total that started with 7 digits.
+To empirically find out the probability of an all digit hash, I wrote a simulation that generated a lot of SHA1 hashes and returned the percentage of the total which start with 7 digits.
 
-It takes just a single character to change in the hash subject for the hash output to be vastly different, (called the _avalanche effect_), so for ease I simply increment a counter (known as the _nonce_) to generate a new hash subject. 
+It takes just a single character in the hash subject to change for the hash output to be vastly different, (called the _avalanche effect_), so for ease I simply increment a counter (known as the _nonce_) to generate a new hash subject. 
 
-As an aside, Bitcoin does something similar in its proof of work algorithm to generate blocks and prevent tampering to the blockchain. It relies on incrementing a counter and generating a hash based upon the transaction log until the resulting hash starts with a certain number of 0s. It is very easy to verify the hash but takes a lot of computational power to generate it in the first place. This is the [HashCash](https://en.bitcoin.it/wiki/Hashcash) proof of work system and has also been used in the past to [prevent email spam](https://en.wikipedia.org/wiki/Hashcash). It forces a non-negligible amount of compute power to be spent generating hashes to compute a valid header to send an email, slowing down would be spammers.
+As an aside, Bitcoin does something similar in its proof of work algorithm to generate blocks and prevent tampering to the blockchain. It relies on incrementing a counter and generating a hash based upon the transaction log until the resulting hash starts with a certain number of 0s (depending on the network difficulty). It is very easy to verify the hash but takes a lot of computational power to generate a valid one in the first place. This is known as the [HashCash](https://en.bitcoin.it/wiki/Hashcash) proof of work system.
 
 The PHP script:
 
@@ -65,7 +65,7 @@ All int: 374; Not all int: 9626; All int: 3.74 %
 All int: 357; Not all int: 9643; All int: 3.57 %
 ~~~
 
-We can see between 3.56% and 4.08% of random SHA1 hashes will start with 7 integers - roughly 1 in 27 - so in reality all digit short hashes are not that rare.
+We can see between 3.56% and 4.08% of random SHA1 hashes will start with 7 integers - roughly 1 in 27. In reality, all digit short hashes are not that rare.
 
 Let's look a bit deeper as to _why_ the probability of all integer short hashes is around 1 in 27.
 
