@@ -3,10 +3,10 @@ layout: post
 title: Alexa Raspberry Pi Temperature Sensor
 description: How to set up a Raspberry Pi Temperature Sensor
 summary: How to set up a Raspberry Pi Temperature Sensor
-tags: [tech]
+tags: [tech, python]
 ---
 
-In this article I will share how I hacked together an Alexa connected room temperature sensor using a Raspberry Pi and a GitHub repository. 
+In this article I will share how I put together an Alexa connected room temperature sensor using a Raspberry Pi and a GitHub repository. 
 
 > "Alexa, room temperature?"
 >
@@ -14,7 +14,7 @@ In this article I will share how I hacked together an Alexa connected room tempe
 
 ### Setting up the Pi
 
-For this project, I started with an old Raspberry pi 2 model with a usb wifi dongle.
+For this project, I started with an old Raspberry Pi 2 model with a usb wifi dongle.
 I used a DHT 22 temperature sensor.
 
 The temperature sensor is connected to the pi like so:
@@ -30,12 +30,12 @@ Pin 9 - Ground (-)
 I did the usual prep work to get remote SSH access to the Pi via Wifi
 
 - Use Raspberry Pi Imager to prepare the SD card with Raspbian
-- Add SSH file to the root
+- Add `ssh` file to the root
 - Create a `wpa_supplicant.conf` file with the wifi information
 
 ### Recording the Temperature
 
-To access the temperature data in a script, I used the [Python Adafruit DHT library](https://github.com/adafruit/Adafruit_Python_DHT) which I installed with:
+To access the temperature data, I used the [Python Adafruit DHT library](https://github.com/adafruit/Adafruit_Python_DHT) which I installed with:
 
 ```
 git clone https://github.com/adafruit/Adafruit_Python_DHT.git && \
@@ -60,20 +60,18 @@ print("Temp: %.2f, Humidity: %.2f" % (temperature, humidity))
 
 ### Making the data accessible to Alexa
 
-Unsurprisingly, Alexa needs access to the temperature data for her to voice it back. I could have exposed the Pi to the web as a web server for Alexa to access the data directly but that involves a lot of faff and messing around with router configuration.
+Unsurprisingly, Alexa needs access to the temperature data for her to voice it back. An option would be to expose the Pi to the web for Alexa to access the data directly but that involves a lot of faff and messing around with router configuration.
 
 Instead, I realised that a public git repository could work as a novel place to store this data.
 Every time a temperature recording is made, the data could be committed and pushed to GitHub, then Alexa would be able to fetch the most recent recording from the raw content of the data file. It would also offer a full history of every temperature recording with delta compression for free.
 
 Now I appreciate this is not the most secure method...
 
-To set that up I created a new GitHub user and created the repository and added the public SSH key from the Pi to GitHub for commit access.
+I created a new GitHub user and repository, and added the public SSH key from the Pi to GitHub for commit access.
 
 https://github.com/raspberry-commits/bedroom-temperature-api
 
-
-
-Then wrote a script to record the temperature data and push it to GitHub:
+Here is the script to record the temperature data and push it to GitHub:
 
 ```python
 import time
@@ -132,33 +130,33 @@ This script can be run indefinitely in a screen:
 screen -d -m python3 rpi-temp-sensor/temp-logger-to-gh.py
 ```
 
-I added the command above to `/etc/rc.local` so that it runs on system boot.
+I added the command below to `/etc/rc.local` so that it runs on system boot.
+
+```
+sudo su - pi -c "screen -dm -S tempsensor python3 /home/pi/rpi-temp-sensor/temp-logger-to-gh.py"
+```
 
 ### Creating the Alexa Skill
 
 
 There are a lot of different ways to build an Alexa skill and it turns out to be a very vast and deep topic. I went down the route of adapting the simplest Hello World example to get things working. After all I only need Alexa to respond to one thing. 
 
-In the Alexa Developer console, I created a new custom skill
- called Rpi Temperature Sensor with Alexa-Hosted Python backend resources.
+In the Alexa Developer console, I created a new custom skill called 'Rpi Temperature Sensor' with Alexa-Hosted Python backend resources.
 
-Then I set the Skill Invocation Name (the name users say to invoke the skill) to 'room temperature'. This allows me to say "Alexa, room temperature" for my skill, and then code, to be executed.
+Then I set the Skill Invocation Name (the name users say to invoke the skill) to 'room temperature'. This allows me to say "Alexa, room temperature" for my skill, and thus code, to be executed.
 
 Everything else I left as default.
 
-Now the code I am currently using is based upon the [Hello World](https://github.com/alexa/skill-sample-python-helloworld-classes/blob/master/lambda/py/hello_world.py) example as mentioned earlier.
+As mentioned earlier, the code is based upon the [Hello World](https://github.com/alexa/skill-sample-python-helloworld-classes/blob/master/lambda/py/hello_world.py) example.
 
 ```python
 # -*- coding: utf-8 -*-
 
-# This sample demonstrates handling intents from an Alexa skill using the Alexa Skills Kit SDK for Python.
-# Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
-# session persistence, api calls, and more.
-# This sample is built using the handler classes approach in skill builder.
 import logging
 import ask_sdk_core.utils as ask_utils
 import requests
 from datetime import datetime
+
 
 from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler
@@ -224,66 +222,8 @@ class LaunchRequestHandler(AbstractRequestHandler):
         return str(int(day_diff / 365)) + " years ago"
 
 
-class CancelOrStopIntentHandler(AbstractRequestHandler):
-    """Single handler for Cancel and Stop Intent."""
-    def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
-        return (ask_utils.is_intent_name("AMAZON.CancelIntent")(handler_input) or
-                ask_utils.is_intent_name("AMAZON.StopIntent")(handler_input))
-
-    def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
-        speak_output = "Goodbye!"
-
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                .response
-        )
-
-
-class SessionEndedRequestHandler(AbstractRequestHandler):
-    """Handler for Session End."""
-    def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
-        return ask_utils.is_request_type("SessionEndedRequest")(handler_input)
-
-    def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
-
-        # Any cleanup logic goes here.
-
-        return handler_input.response_builder.response
-
-
-class IntentReflectorHandler(AbstractRequestHandler):
-    """The intent reflector is used for interaction model testing and debugging.
-    It will simply repeat the intent the user said. You can create custom handlers
-    for your intents by defining them above, then also adding them to the request
-    handler chain below.
-    """
-    def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
-        return ask_utils.is_request_type("IntentRequest")(handler_input)
-
-    def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
-        intent_name = ask_utils.get_intent_name(handler_input)
-        speak_output = "You just triggered " + intent_name + "."
-
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                # .ask("add a reprompt if you want to keep the session open for the user to respond")
-                .response
-        )
-
 
 class CatchAllExceptionHandler(AbstractExceptionHandler):
-    """Generic error handling to capture any syntax or routing errors. If you receive an error
-    stating the request handler chain is not found, you have not implemented a handler for
-    the intent being invoked or included it in the skill builder below.
-    """
     def can_handle(self, handler_input, exception):
         # type: (HandlerInput, Exception) -> bool
         return True
@@ -292,7 +232,7 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
         # type: (HandlerInput, Exception) -> Response
         logger.error(exception, exc_info=True)
 
-        speak_output = "Sorry, I had trouble doing what you asked. Please try again."
+        speak_output = "Sorry, I had trouble fetching the room temperature data. Please try again."
 
         return (
             handler_input.response_builder
@@ -301,17 +241,9 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
                 .response
         )
 
-# The SkillBuilder object acts as the entry point for your skill, routing all request and response
-# payloads to the handlers above. Make sure any new handlers or interceptors you've
-# defined are included below. The order matters - they're processed top to bottom.
-
 
 sb = SkillBuilder()
-
 sb.add_request_handler(LaunchRequestHandler())
-sb.add_request_handler(CancelOrStopIntentHandler())
-sb.add_request_handler(IntentReflectorHandler()) # make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
-
 sb.add_exception_handler(CatchAllExceptionHandler())
 
 lambda_handler = sb.lambda_handler()
