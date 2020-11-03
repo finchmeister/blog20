@@ -3,33 +3,39 @@ layout: post
 title: Alexa Raspberry Pi Temperature Sensor
 description: How to set up a Raspberry Pi Temperature Sensor
 summary: How to set up a Raspberry Pi Temperature Sensor
-tags: [tech, python]
+tags: [tech, python, raspberrypi]
 ---
 
-In this article I will share how I put together an Alexa connected room temperature sensor using a Raspberry Pi and a GitHub repository. 
+In this article I will share how I put together an Alexa connected Raspberry Pi temperature sensor using a novel data store.
+
+<video width="320" controls>
+    <source src="{{ '/assets/rpi-temp-logger/alexa-room-temp.mp4' | relative_url }}" type="video/mp4">
+</video>
 
 > "Alexa, room temperature?"
 >
-> **The temperature is 18 degrees celcius (recorded 1 minute ago)**
+> **"The temperature is 18 degrees celcius (recorded 1 minute ago)"**
 
-### Setting up the Pi
+### Setting Up the Pi
 
-For this project, I started with an old Raspberry Pi 2 model with a usb wifi dongle.
-I used a DHT 22 temperature sensor.
+For this project, I used an old Raspberry Pi 2 model with a USB WiFi dongle and a DHT22 temperature sensor.
 
-The temperature sensor is connected to the pi like so:
-
-PHOTO
+The temperature sensor is connected to the Pi as follows:
 
 ```
-Pin 1 - 3.3v power (+)
-Pin 4 - GPIO one-wire data out
-Pin 9 - Ground (-)
+Pi              DHT22 
+---             ---      
+Pin 1           3.3v power (+)
+Pin 7 (GPIO4)   GPIO data out
+Pin 9           Ground (-)
 ```
+
+![Full commit]({{ '/assets/rpi-temp-logger/rpi-temp-sensor.jpg' | relative_url }})
+
 
 I did the usual prep work to get remote SSH access to the Pi via Wifi
 
-- Use Raspberry Pi Imager to prepare the SD card with Raspbian
+- Use Raspberry Pi Imager to prepare the SD card with Raspbian Lite
 - Add `ssh` file to the root
 - Create a `wpa_supplicant.conf` file with the wifi information
 
@@ -58,18 +64,18 @@ print("Temp: %.2f, Humidity: %.2f" % (temperature, humidity))
 # Temp: 19.92, Humidity: 0.83
 ```
 
-### Making the data accessible to Alexa
+### Making the Data Accessible to Alexa
 
-Unsurprisingly, Alexa needs access to the temperature data for her to voice it back. An option would be to expose the Pi to the web for Alexa to access the data directly but that involves a lot of faff and messing around with router configuration.
+Unsurprisingly, Alexa needs access to the temperature data for her to voice it back. An option would be to expose the Pi to the web for Alexa to access the data directly but that involves a lot of faff setting up a web-server and messing around with router configuration to publicly expose said web-server.
 
 Instead, I realised that a public git repository could work as a novel place to store this data.
-Every time a temperature recording is made, the data could be committed and pushed to GitHub, then Alexa would be able to fetch the most recent recording from the raw content of the data file. It would also offer a full history of every temperature recording with delta compression for free.
+Every time a temperature recording is made, the data can be committed to the repository and pushed to GitHub, then Alexa would be able to fetch the most recent recording from the raw content of the data file. It would also offer a full history of every temperature recording with delta compression for free.
 
-Now I appreciate this is not the most secure method...
+The downside to storing my room temperature data in a public git repository is that, of course, it creates the security risk whereby a would-be burglar could study the temperature patterns and potentially discover when I am not in the room based on some kind of statistical model or machine learning algorithm.
 
-I created a new GitHub user and repository, and added the public SSH key from the Pi to GitHub for commit access.
+I created a new GitHub user and [repository](https://github.com/raspberry-commits/bedroom-temperature-api), and added the public SSH key from the Pi to GitHub for commit access.
 
-https://github.com/raspberry-commits/bedroom-temperature-api
+![GitHub Repo]({{ '/assets/rpi-temp-logger/github-repo.png' | relative_url }})
 
 Here is the script to record the temperature data and push it to GitHub:
 
@@ -122,7 +128,7 @@ except KeyboardInterrupt:
     pass
 ```
 
-The data structure follows that to satisfy Influx DB which is where I was originally posting the data, more details on that in a separate blog post.
+The data structure can be posted to Influx DB, which is where I was originally storing the data before the SD card on the Pi crapped out on me.
 
 This script can be run indefinitely in a screen:
 
@@ -139,9 +145,9 @@ sudo su - pi -c "screen -dm -S tempsensor python3 /home/pi/rpi-temp-sensor/temp-
 ### Creating the Alexa Skill
 
 
-There are a lot of different ways to build an Alexa skill and it turns out to be a very vast and deep topic. I went down the route of adapting the simplest Hello World example to get things working. After all I only need Alexa to respond to one thing. 
+There are a lot of different ways to build an Alexa skill and it turns out to be a very vast and deep topic. I went down the route of adapting the simplest Hello World example to get things working, after all, I was only looking for Alexa to respond to one thing, I did not need a complex interaction model.
 
-In the Alexa Developer console, I created a new custom skill called 'Rpi Temperature Sensor' with Alexa-Hosted Python backend resources.
+In the Alexa Developer console, I created a new custom skill called 'Rpi Temperature Sensor' and provisioned it with Alexa-Hosted Python backend resources.
 
 Then I set the Skill Invocation Name (the name users say to invoke the skill) to 'room temperature'. This allows me to say "Alexa, room temperature" for my skill, and thus code, to be executed.
 
@@ -251,8 +257,11 @@ lambda_handler = sb.lambda_handler()
 
 To keep things as simple as possible, I stripped back the example and added my custom code to the `LaunchRequestHandler` class where the `handle` method is executed when the skill is launched.
 
-The code fetches the temperature data from GitHub and extracts it into a phrase for Alexa to speak with a human understandable time since recording metric.
+The code fetches the temperature data from GitHub and extracts it alongside a human-understandable time since recording for Alexa to speak. E.g.: "The temperature is 18 degrees celcius (recorded 1 minute ago)".
 
 I deployed this from the Alexa console without the need to publish to live. Considering I have no plans to make this public, deploying it to dev, to work on my Alexa alone is sufficient. 
 
+Now I believe it is possible to use the Alexa Smart Home skills as a basis to make the integration cleaner. For example, if I say, "Alexa, what is the room temperature?", she gets confused and responds with "Bedroom doesn't support that". Ideally, Alexa would respond to that command using the Smart Home interaction model, but I decided building a full integration would take far more effort than I was willing to put in.
+
 And that's it! A Raspberry Pi Temperature sensor logging to GitHub with a very hacky Alexa skill providing a voice interface.
+

@@ -1,6 +1,12 @@
 # Blog
 
-How to run etc...
+# Install
+
+```
+bundle install
+```
+
+# Run
 ```
 bundle exec jekyll serve
 ```
