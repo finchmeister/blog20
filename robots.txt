@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://finchmeister.github.io/blog20/sitemap.xml

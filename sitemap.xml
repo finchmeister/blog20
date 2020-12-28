@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+<loc>https://finchmeister.github.io/blog20/about</loc>
+<lastmod>2020-12-28T21:49:09+00:00</lastmod>
+</url>
+<url>
+<loc>https://finchmeister.github.io/blog20/projects</loc>
+<lastmod>2020-12-28T21:49:09+00:00</lastmod>
+</url>
+<url>
+<loc>https://finchmeister.github.io/blog20/tags</loc>
+<lastmod>2020-12-28T21:49:09+00:00</lastmod>
+</url>
+<url>
+<loc>https://finchmeister.github.io/blog20/2019/08/02/git-commit-hash-number-theory</loc>
+<lastmod>2019-08-02T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>https://finchmeister.github.io/blog20/2020/10/31/raspberry-pi-temp-logger</loc>
+<lastmod>2020-10-31T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>https://finchmeister.github.io/blog20/projects/strava-leaderboard</loc>
+<lastmod>2020-04-01T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>https://finchmeister.github.io/blog20/</loc>
+</url>
+</urlset>
