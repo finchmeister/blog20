@@ -33,21 +33,16 @@ Pin 9           Ground (-)
 ![Full commit]({{ '/assets/rpi-temp-logger/rpi-temp-sensor.jpg' | relative_url }})
 
 
-I did the usual prep work to get remote SSH access to the Pi via Wifi
-
-- Use Raspberry Pi Imager to prepare the SD card with Raspbian Lite
-- Add `ssh` file to the root
-- Create a `wpa_supplicant.conf` file with the wifi information
+I setup the Raspberry Pi in headless mode with Raspbian Lite.
 
 ### Recording the Temperature
 
-To access the temperature data, I used the [Python Adafruit DHT library](https://github.com/adafruit/Adafruit_Python_DHT) which I installed with:
+To access the temperature data, I used the [Python Adafruit DHT library](https://github.com/adafruit/Adafruit_Python_DHT) which I installed with pip3:
 
 ```
-git clone https://github.com/adafruit/Adafruit_Python_DHT.git && \
-	cd Adafruit_Python_DHT && \
-	python3 setup.py install && \
-	cd ..
+sudo apt-get install git screen python3-pip -y
+sudo python3 -m pip install --upgrade pip setuptools wheel
+sudo pip3 install Adafruit_DHT
 ```
 
 In its simplest form, here is how we can get the temperature from the sensor:
@@ -66,18 +61,20 @@ print("Temp: %.2f, Humidity: %.2f" % (temperature, humidity))
 
 ### Making the Data Accessible to Alexa
 
-Unsurprisingly, Alexa needs access to the temperature data for her to voice it back. An option would be to expose the Pi to the web for Alexa to access the data directly but that involves a lot of faff setting up a web-server and messing around with router configuration to publicly expose said web-server.
+Alexa needs access to the temperature data for her to voice it back. An option would be to expose the Pi to the web for Alexa to access the data directly but that would involve running a web-server on the Pi and a lot of modified router configuration to expose the Pi to the public internet.
 
 Instead, I realised that a public git repository could work as a novel place to store this data.
-Every time a temperature recording is made, the data can be committed to the repository and pushed to GitHub, then Alexa would be able to fetch the most recent recording from the raw content of the data file. It would also offer a full history of every temperature recording with delta compression for free.
+Every time a temperature recording is made, the data can be committed to a repository and pushed to GitHub, then Alexa would be able to fetch the most recent recording from the raw content of the data file. It would also offer a full history of every temperature recording with delta compression for free.
 
-The downside to storing my room temperature data in a public git repository is that, of course, it creates the security risk whereby a would-be burglar could study the temperature patterns and potentially discover when I am not in the room based on some kind of statistical model or machine learning algorithm.
+Of course, open-sourcing my room temperature data could pose a security risk. It may be possible to infer when I am in the room or not from the data, and perhaps this could be used for malicious purposes...?
+
+#### Setup
 
 I created a new GitHub user and [repository](https://github.com/raspberry-commits/bedroom-temperature-api), and added the public SSH key from the Pi to GitHub for commit access.
 
 ![GitHub Repo]({{ '/assets/rpi-temp-logger/github-repo.png' | relative_url }})
 
-Here is the script to record the temperature data and push it to GitHub:
+The following script records the temperature data and pushes it to GitHub:
 
 ```python
 import time
@@ -128,7 +125,7 @@ except KeyboardInterrupt:
     pass
 ```
 
-The data structure can be posted to Influx DB, which is where I was originally storing the data before the SD card on the Pi crapped out on me.
+The data structure can be posted to Influx DB, which is where I was originally storing the data before the SD card on the Pi randomly corrupted.
 
 This script can be run indefinitely in a screen:
 
