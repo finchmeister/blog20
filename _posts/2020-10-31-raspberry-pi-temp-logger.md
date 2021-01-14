@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Alexa Raspberry Pi Temperature Sensor
-description: How to set up a Raspberry Pi Temperature Sensor
-summary: How to set up a Raspberry Pi Temperature Sensor
+title: Alexa Raspberry Pi Temperature Sensor (Part 1)
+description: How to set up a Raspberry Pi Temperature Sensor with Alexa connectivity
+summary: How to set up a Raspberry Pi Temperature Sensor with Alexa connectivity
 tags: [tech, python, raspberrypi]
 ---
 
@@ -34,12 +34,14 @@ Pin 9           Ground (-)
 
 
 I setup the Raspberry Pi in headless mode with Raspbian Lite.
+That involves writing the image to an SD card using the Rasberry Pi Imager, adding an empty `ssh` file to the sd root directory, and adding `wpa_supplicant.conf` file with the wifi credentials to the root directory.
 
 ### Recording the Temperature
 
 To access the temperature data, I used the [Python Adafruit DHT library](https://github.com/adafruit/Adafruit_Python_DHT) which I installed with pip3:
 
 ```
+sudo apt-get update
 sudo apt-get install git screen python3-pip -y
 sudo python3 -m pip install --upgrade pip setuptools wheel
 sudo pip3 install Adafruit_DHT
@@ -63,8 +65,8 @@ print("Temp: %.2f, Humidity: %.2f" % (temperature, humidity))
 
 Alexa needs access to the temperature data for her to voice it back. An option would be to expose the Pi to the web for Alexa to access the data directly but that would involve running a web-server on the Pi and a lot of modified router configuration to expose the Pi to the public internet.
 
-Instead, I realised that a public git repository could work as a novel place to store this data.
-Every time a temperature recording is made, the data can be committed to a repository and pushed to GitHub, then Alexa would be able to fetch the most recent recording from the raw content of the data file. It would also offer a full history of every temperature recording with delta compression for free.
+Instead, I went for a public git repository as a novel place to store the temperature data.
+Every time a temperature recording is made, the data can be committed to a repository and pushed to GitHub, then Alexa would be able to fetch the most recent recording from the raw content of the data file. It would also offer a safe backup of every temperature recording with delta compression for free.
 
 Of course, open-sourcing my room temperature data could pose a security risk. It may be possible to infer when I am in the room or not from the data, and perhaps this could be used for malicious purposes...?
 
@@ -74,16 +76,15 @@ I created a new GitHub user and [repository](https://github.com/raspberry-commit
 
 ![GitHub Repo]({{ '/assets/rpi-temp-logger/github-repo.png' | relative_url }})
 
-The following script records the temperature data and pushes it to GitHub:
+I used the following script to take a temperature recording and push it to GitHub:
 
 ```python
-import time
 import datetime
 import json
 import Adafruit_DHT
 import os
+import sys
 
-interval = int(os.getenv("INTERVAL", 120))
 measurement = "rpi-dht22"
 location = "bedroom"
 
@@ -91,58 +92,49 @@ location = "bedroom"
 sensor = Adafruit_DHT.DHT22
 sensor_gpio = 4
 
-try:
-    while True:
-        humidity, temperature = Adafruit_DHT.read_retry(sensor, sensor_gpio)
-        humidity = round(humidity, 2)
-        temperature = round(temperature, 2)
-        iso = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-        print("[%s] Temp: %s, Humidity: %s" % (iso, temperature, humidity))
-        data = [
-            {
-                "measurement": measurement,
-                "tags": {
-                    "location": location,
-                },
-                "time": iso,
-                "fields": {
-                    "temperature": temperature,
-                    "humidity": humidity
-                }
-            }
-        ]
-        f = open("/home/pi/bedroom-temperature-api/temperature.json", "w")
-        f.write(json.dumps(data[0], sort_keys=True, indent=4))
-        f.close()
-        os.system("cd /home/pi/bedroom-temperature-api && "
-                  "git add temperature.json "
-                  "&& git commit -m '" + iso + "' "
-                  "&& git push origin master")
+humidity, temperature = Adafruit_DHT.read_retry(sensor, sensor_gpio)
+iso = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+if humidity is None or temperature is None:
+    sys.exit("[%s] There was an error fetching the temperature data" % iso)
 
-        time.sleep(interval)
+humidity = round(humidity, 2)
+temperature = round(temperature, 2)
+print("[%s] Temp: %s, Humidity: %s" % (iso, temperature, humidity))
 
-except KeyboardInterrupt:
-    pass
+data = [
+    {
+        "measurement": measurement,
+        "tags": {
+            "location": location,
+        },
+        "time": iso,
+        "fields": {
+            "temperature": temperature,
+            "humidity": humidity
+        }
+    }
+]
+f = open("/home/pi/bedroom-temperature-api/temperature.json", "w")
+f.write(json.dumps(data[0], sort_keys=True, indent=4))
+f.close()
+os.system("cd /home/pi/bedroom-temperature-api && "
+          "git add temperature.json "
+          "&& git commit -m '" + iso + "' "
+          "&& git push origin master")
 ```
 
 The data structure can be posted to Influx DB, which is where I was originally storing the data before the SD card on the Pi randomly corrupted.
 
-This script can be run indefinitely in a screen:
+I set this script up as a cron job that runs every 2 minutes by adding the following line to `crontab -e`:
 
 ```
-screen -d -m python3 rpi-temp-sensor/temp-logger-to-gh.py
-```
-
-I added the command below to `/etc/rc.local` so that it runs on system boot.
-
-```
-sudo su - pi -c "screen -dm -S tempsensor python3 /home/pi/rpi-temp-sensor/temp-logger-to-gh.py"
+*/2 * * * * /usr/bin/python3 /home/pi/rpi-temp-sensor/temp-logger-to-gh.py >/dev/null 2>&1
 ```
 
 ### Creating the Alexa Skill
 
 
-There are a lot of different ways to build an Alexa skill and it turns out to be a very vast and deep topic. I went down the route of adapting the simplest Hello World example to get things working, after all, I was only looking for Alexa to respond to one thing, I did not need a complex interaction model.
+There are a lot of different ways to build an Alexa skill - it turns out to be a very vast and deep topic. I went down the route of adapting the simplest Hello World example to get things working, after all, I was only looking for Alexa to respond to one thing, I did not need a complex interaction model.
 
 In the Alexa Developer console, I created a new custom skill called 'Rpi Temperature Sensor' and provisioned it with Alexa-Hosted Python backend resources.
 
@@ -258,7 +250,7 @@ The code fetches the temperature data from GitHub and extracts it alongside a hu
 
 I deployed this from the Alexa console without the need to publish to live. Considering I have no plans to make this public, deploying it to dev, to work on my Alexa alone is sufficient. 
 
-Now I believe it is possible to use the Alexa Smart Home skills as a basis to make the integration cleaner. For example, if I say, "Alexa, what is the room temperature?", she gets confused and responds with "Bedroom doesn't support that". Ideally, Alexa would respond to that command using the Smart Home interaction model, but I decided building a full integration would take far more effort than I was willing to put in.
+Now I believe it is possible to use the Alexa Smart Home skills as a basis to make the integration cleaner. For example, if I say, "Alexa, what is the room temperature?", she gets confused and responds with "Bedroom doesn't support that". Ideally, Alexa would respond to that command using the Smart Home interaction model, but I decided building a full integration was overkill and not worth the effort.
 
 And that's it! A Raspberry Pi Temperature sensor logging to GitHub with a very hacky Alexa skill providing a voice interface.
 
